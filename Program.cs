@@ -85,7 +85,7 @@ public class StackBasedIteration
             file.WriteLine("{");
             foreach (DataRowView row in sortView)
             {
-                file.WriteLine("\"{0}\":",row["Name"]);
+                file.WriteLine("\"{0}\":{\n",row["Name"]);
                 file.WriteLine("\"Full Path\":{0},", row["FullPath"]);
                 file.WriteLine("\"Size\":{0},", row["Size"]);
                 file.WriteLine("\"Sub Folders\":[{0}],", row["SubFolders"]);
