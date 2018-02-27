@@ -9,7 +9,7 @@ public class StackBasedIteration
 {
     static void Main()
     {
-        String[] drives = Environment.GetLogicalDrives();
+        string[] drives = Environment.GetLogicalDrives();
         DataTable dirInfo = new DataTable();
         dirInfo.Columns.Add("Name", typeof(string));
         dirInfo.Columns.Add("Location", typeof(string));
@@ -75,21 +75,15 @@ public class StackBasedIteration
                 continue;
             }
 
-            if (subDirs == null | subDirs.Length == 0)
+            // Push the subdirectories onto the stack for traversal.
+            foreach (string str in subDirs)
             {
-                dirInfo.Rows.Add(currentDir, Directory.GetParent(currentDir).FullName, 0.0, "end Directory");
+                dirs.Push(str);
             }
-            else
-            {
-                // Push the subdirectories onto the stack for traversal.
-                foreach (string str in subDirs)
-                    dirs.Push(str);
-
-                dirInfo.Rows.Add(currentDir, Directory.GetParent(currentDir).FullName, 0.0, "Folder");
-            }
-
+                
             // Get file size
             string[] files = null;
+            decimal fileSize = 0;
             try
             {
                 files = Directory.GetFiles(currentDir);
@@ -112,10 +106,10 @@ public class StackBasedIteration
             {
                 try
                 {
-                    // Store file path and size in Datatable.
+                    // Store file path and size in datatable.
                     FileInfo fi = new FileInfo(file);
                     dirInfo.Rows.Add(fi.Name, currentDir, fi.Length, "file");
-                    Console.WriteLine("{0}: {1}", fi.Name, fi.Length);
+                    fileSize += fi.Length;
                 }
                 catch (FileNotFoundException e)
                 {
@@ -126,11 +120,35 @@ public class StackBasedIteration
                     continue;
                 }
             }
+
+            dirInfo.Rows.Add(currentDir, Path.GetDirectoryName(currentDir), fileSize, "folder");
+            sumDirSize(fileSize, currentDir, dirInfo);
+        }
+    }
+    public static void sumDirSize(Decimal fileSize, string currentDir, DataTable dirInfo)
+    {
+        if (fileSize > 0)
+        {
+            string traversePath = currentDir;
+            string rootDrive = Path.GetPathRoot(currentDir);
+            do
+            {
+                traversePath = Path.GetDirectoryName(traversePath);
+                DataRow[] matchRows = dirInfo.Select("Type = 'folder' AND Location = traversePath");
+
+                for(int i = 0; i < matchRows.Length; i ++)
+                {
+                    matchRows[i]["Size"] = Convert.ToDecimal(matchRows[i]["Size"]) + fileSize;
+                }
+            } while (string.Compare(rootDrive, traversePath) != 0);
+
         }
     }
     public static void orderDirSize(DataTable dirInfo)
     {
         dirInfo.DefaultView.Sort = "columnName DESC";
     }
+
+
 }
 
